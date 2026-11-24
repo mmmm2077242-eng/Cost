@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>متابعة تكاليف المشاريع</title>
+<meta name="description" content="تطبيق لمتابعة تكاليف العمالة وصافي الربح لأكثر من مشروع">
+<meta name="theme-color" content="#14263F">
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#EBF0F5; --card:#FFFFFF; --soft:#F2F5F9; --ink:#14263F; --muted:#586A80; --line:#D2DBE6;
+  --hero:#14263F; --hi:#F5B700; --hi-ink:#14263F; --blue:#2C5282; --danger:#B83227; --focus:#2C5282;
+  --warn-bg:#FFF4D6; --warn-ink:#6B4E00; --pos:#1E7F57;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0C141F; --card:#152233; --soft:#1B2B3F; --ink:#E8EEF5; --muted:#95A5BA; --line:#263850;
+    --hero:#1B3454; --blue:#7FB2E5; --danger:#F28B7D; --focus:#7FB2E5;
+    --warn-bg:#3A3015; --warn-ink:#F5D77A; --pos:#6FD3A0;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Arabic",Tahoma,Arial,sans-serif;
+  font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding-top:max(10px,env(safe-area-inset-top))}
+.top-row{display:flex;align-items:center;gap:10px;padding:0 14px;max-width:640px;margin:0 auto}
+.top h1{font-size:17px;margin:0;font-weight:800}
+.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.status i{width:7px;height:7px;border-radius:50%;background:#2E8B6A;display:inline-block}
+.status.saving i{background:var(--hi)}
+.status.error i{background:var(--danger)}
+.msel{margin-inline-start:auto;height:38px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 10px;font-weight:600;max-width:160px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 10px;max-width:640px;margin:0 auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;height:38px;border-radius:19px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-weight:600;display:flex;align-items:center;gap:7px;max-width:180px;white-space:nowrap}
+.chip span{overflow:hidden;text-overflow:ellipsis}
+.chip i{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+.chip.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.chip.add{border-style:dashed;color:var(--muted);background:transparent}
+
+/* ---------- hero ---------- */
+main{padding-bottom:110px}
+.hero{background:var(--hero);color:#fff;border-radius:18px;padding:18px 18px 16px;margin:14px 0}
+.hero-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px}
+.hero-top b{font-size:17px}
+.hero-top span{font-size:13px;opacity:.75;flex:0 0 auto}
+.hero .lab{font-size:13px;opacity:.75}
+.hero .big{font-size:42px;font-weight:800;line-height:1.1;color:var(--hi)}
+.hero .big small{font-size:15px;font-weight:600;color:#fff;opacity:.8;margin-inline-start:7px}
+.bar{display:flex;gap:2px;height:10px;margin:14px 0 14px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.14)}
+.bar i{display:block;min-width:3px}
+.profit{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-bottom:13px}
+.profit span{display:block;font-size:12.5px;opacity:.75}
+.profit b{font-size:25px;line-height:1.2}
+.profit b small{font-size:13px;margin-inline-start:5px;opacity:.85;font-weight:600}
+.profit.pos>div:first-child b{color:#6FD3A0}
+.profit.neg>div:first-child b{color:#FF9A8B}
+.profit .inc{text-align:end}
+.profit .inc b{font-size:18px;color:#fff}
+.pf.pos{color:var(--pos)}
+.pf.neg{color:var(--danger)}
+.ir{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;display:grid;grid-template-columns:1fr 40px;gap:10px;align-items:center}
+.ir .r2{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ir .amt{display:flex;align-items:center;gap:8px}
+.ir .amt span{color:var(--muted);font-size:13px}
+.sv small{display:block}
+.stats{display:flex;border-top:1px solid rgba(255,255,255,.16);padding-top:12px}
+.stats>div{flex:1}
+.stats>div+div{border-inline-start:1px solid rgba(255,255,255,.16);padding-inline-start:14px}
+.stats b{display:block;font-size:20px;line-height:1.3}
+.stats span{font-size:12.5px;opacity:.75}
+
+/* ---------- buttons & fields ---------- */
+.btn{height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700;padding:0 18px}
+.btn.block{display:block;width:100%}
+.btn.hi{background:var(--hi);border-color:var(--hi);color:var(--hi-ink)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn.fill{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.fld{display:block;min-width:0}
+.fld>span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:600}
+input[type=text],input[type=date],input:not([type]),.fld input{
+  width:100%;height:46px;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0 12px;font-size:16px;min-width:0
+}
+input[inputmode=numeric],input[inputmode=decimal]{direction:ltr;text-align:right}
+input::placeholder{color:var(--muted);opacity:.7}
+
+/* ---------- segmented tabs ---------- */
+.seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:14px}
+.seg button{flex:1;height:40px;border:0;background:transparent;border-radius:9px;font-weight:700;color:var(--muted);font-size:14px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+
+/* ---------- day cards ---------- */
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:10px;overflow:hidden}
+.day.open{border-color:var(--blue);border-width:2px}
+.day-head{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;min-height:70px;border:0;background:transparent;text-align:start}
+.tile{width:54px;flex:0 0 auto;background:var(--soft);border-radius:10px;padding:5px 0;text-align:center;line-height:1.15}
+.tile b{display:block;font-size:21px}
+.tile small{font-size:11px;color:var(--muted)}
+.dmid{flex:1;min-width:0}
+.dmid b{display:block;font-size:15px}
+.dmid span{font-size:13px;color:var(--muted)}
+.dtot{text-align:end;flex:0 0 auto}
+.dtot b{display:block;font-size:19px;line-height:1.2}
+.dtot small{font-size:12px;color:var(--muted)}
+.day-body{border-top:1px solid var(--line);padding:14px 12px 12px;display:grid;gap:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.stepper{direction:ltr;display:flex;height:46px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.stepper button{width:44px;border:0;background:var(--soft);font-size:22px;font-weight:700;flex:0 0 auto}
+.stepper input{border:0!important;border-radius:0!important;text-align:center!important;height:100%!important;font-weight:800;padding:0 4px!important}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-radius:9px;padding:7px 10px;font-size:13px;margin-top:-6px}
+.bd{background:var(--soft);border-radius:10px;padding:8px 12px;font-size:14px}
+.bd>div{display:flex;justify-content:space-between;gap:10px;padding:4px 0}
+.bd>div+div{border-top:1px dashed var(--line)}
+.bd em{font-style:normal;color:var(--muted);font-size:12.5px;margin-inline-start:8px}
+.bd p.hint{margin:6px 0 2px;font-size:12.5px;color:var(--muted)}
+.vars{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vars .wide{grid-column:1/-1}
+.fld>span em{font-style:normal;opacity:.75;font-weight:500}
+.vx{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:1fr 40px;gap:10px;align-items:center}
+.vx .tg{grid-column:1/-1}
+.vx .vh{grid-column:1/-1;margin:-2px 2px 0;font-size:12.5px;color:var(--muted)}
+.ex>.lbl{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.exrow{display:grid;grid-template-columns:1fr 96px 40px;gap:8px;margin-bottom:8px}
+.x{width:40px;height:46px;border:1px solid var(--line);background:transparent;border-radius:10px;font-size:20px;color:var(--muted)}
+.linkbtn{border:0;background:transparent;color:var(--blue);font-weight:700;padding:6px 0;font-size:14px}
+.acts{display:flex;gap:10px}
+.acts .btn{flex:1}
+
+/* ---------- summary ---------- */
+.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.srow{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.srow+.srow{border-top:1px solid var(--line)}
+.sw{width:12px;height:12px;border-radius:4px;flex:0 0 auto;display:inline-block}
+.sn{flex:1;min-width:0}
+.sn b{display:block;font-size:15px}
+.sn small{color:var(--muted);font-size:12.5px}
+.sv{text-align:end}
+.sv b{display:block;font-size:16px}
+.sv small{color:var(--muted);font-size:12.5px}
+.srow.tot{background:var(--soft)}
+.srow.tot .sv b{font-size:19px}
+h3{font-size:14px;margin:18px 2px 8px;color:var(--muted)}
+
+/* ---------- fixed fields ---------- */
+.intro{margin:0 2px 12px;color:var(--muted);font-size:13.5px}
+.note{margin:12px 2px 0;color:var(--muted);font-size:13px}
+.fx{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr 40px;gap:10px;align-items:center}
+.fx .amt{grid-column:1/3;display:flex;align-items:center;gap:8px}
+.fx .amt input{flex:0 0 96px;width:96px}
+.fx .amt>span{color:var(--muted);font-size:13px;flex:0 0 auto}
+.tg{display:flex;flex:1 1 auto;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tg button{flex:1;border:0;background:var(--card);height:44px;padding:0 6px;font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tg button.on{background:var(--ink);color:var(--card)}
+.fx>.x{grid-row:1;grid-column:3}
+.proj-set{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);display:grid;gap:12px}
+
+/* ---------- overview ---------- */
+.pcard{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;text-align:start;min-height:74px}
+.pcard .sw{width:14px;height:44px;border-radius:5px}
+.pcard .sn b{font-size:16px}
+.pcard .sv b{font-size:19px}
+.pcard.add{border-style:dashed;justify-content:center;color:var(--muted);font-weight:700;background:transparent}
+.empty{text-align:center;padding:30px 18px;background:var(--card);border:1px dashed var(--line);border-radius:14px;margin-top:12px}
+.empty b{font-size:16px}
+.empty p{color:var(--muted);margin:6px 0 16px;font-size:14px}
+.empty .btn{min-width:180px}
+
+/* ---------- modal & toast ---------- */
+.scrim{position:fixed;inset:0;background:rgba(8,14,22,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));display:grid;gap:14px}
+.sheet h2{margin:0;font-size:18px}
+.sheet p{margin:0;color:var(--muted)}
+.sheet textarea{width:100%;min-height:210px;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:12px;font-size:15px;line-height:1.7;resize:none}
+.sheet .acts{margin-top:2px}
+@media(min-width:600px){.scrim{align-items:center}.sheet{border-radius:20px}}
+#toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:12px;display:flex;gap:16px;align-items:center;z-index:60;font-weight:600;max-width:92vw}
+#toast button{border:0;background:transparent;color:var(--hi);font-weight:800;padding:0}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>تكاليف المشاريع</h1>
+    <span class="status" id="status" aria-live="polite"></span>
+    <select class="msel" id="monthSel" aria-label="الشهر"></select>
+  </div>
+  <nav class="chips" id="chips" aria-label="المشاريع"></nav>
+</header>
+<div class="wrap"><main id="main"><div class="loading">جارٍ تحميل البيانات…</div></main></div>
+<div id="modal"></div>
+<div id="toast" hidden></div>
+
+<script>
+(()=>{
+'use strict';
+
+/* ================= constants & helpers ================= */
+const KEY='labor-cost-tracker-v1';
+const PAL=['#F5B700','#7FB2E5','#5CC2B5','#E58F7B','#B79CE8','#9FD36B','#F28FB5'];
+const EXTRA_C='#AEB9C8';
+const $=(s,r=document)=>r.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
+const fmt=n=>nf.format(Math.round((+n||0)*100)/100);
+const pct=(v,t)=>t>0?Math.round(v/t*100):0;
+const pad=n=>String(n).padStart(2,'0');
+
+/* accepts Arabic-Indic digits and Arabic separators */
+function parseNum(s){
+  s=String(s==null?'':s)
+    .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g,'.').replace(/[٬,،\s]/g,'');
+  const n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+
+const todayISO=()=>{const t=new Date();return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`};
+const curMonth=()=>todayISO().slice(0,7);
+const addDays=(iso,n)=>{const [y,m,d]=iso.split('-').map(Number);const t=new Date(Date.UTC(y,m-1,d+n));return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`};
+const inMonth=(iso,m)=>m==='all'||iso.startsWith(m);
+let fWd,fMon,fMonY;
+try{
+  fWd=new Intl.DateTimeFormat('ar-EG-u-nu-latn',{weekday:'long',timeZone:'UTC'});
+  fMon=new Intl.DateTimeFormat('ar-EG-u-nu-latn',{month:'long',timeZone:'UTC'});
+  fMonY=new Intl.DateTimeFormat('ar-EG-u-nu-latn',{month:'long',year:'numeric',timeZone:'UTC'});
+}catch(e){}
+function dateParts(iso){
+  const [y,m,d]=iso.split('-').map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d));
+  return {d,wd:fWd?fWd.format(dt):iso,mon:fMon?fMon.format(dt):String(m)};
+}
+function monthLabel(m){
+  if(m==='all')return 'كل الفترة';
+  const [y,mm]=m.split('-').map(Number);
+  return fMonY?fMonY.format(new Date(Date.UTC(y,mm-1,1))):m;
+}
+
+/* ================= state ================= */
+const S={projects:[],active:'overview',month:curMonth()};
+const ui={tab:'log',openDay:null,loaded:false,save:'idle',undo:null};
+const pname=p=>p.name&&p.name.trim()?p.name:'مشروع بلا اسم';
+const curProject=()=>S.projects.find(p=>p.id===S.active)||null;
+
+function newProject(name){
+  return {id:uid(),name,fixed:[
+    {id:uid(),name:'تكلفة العامل',amount:550,type:'worker'},
+    {id:uid(),name:'رئيس الوردية',amount:600,type:'day'},
+    {id:uid(),name:'نقل العمال',amount:800,type:'day'}
+  ],vars:[],income:[],days:[]};
+}
+
+function sanitize(d){
+  const projects=(Array.isArray(d&&d.projects)?d.projects:[]).map(p=>({
+    id:String(p.id||uid()),name:String(p.name||''),
+    fixed:(Array.isArray(p.fixed)?p.fixed:[]).map(f=>({id:String(f.id||uid()),name:String(f.name||''),amount:+f.amount||0,type:f.type==='worker'?'worker':'day'})),
+    vars:(Array.isArray(p.vars)?p.vars:[]).map(v=>({id:String(v.id||uid()),name:String(v.name||''),type:['money','number','text'].includes(v.type)?v.type:'money'})),
+    income:(Array.isArray(p.income)?p.income:[]).filter(e=>e&&/^\d{4}-\d{2}-\d{2}$/.test(e.date)).map(e=>({id:String(e.id||uid()),date:e.date,label:String(e.label||''),amount:+e.amount||0})),
+    days:(Array.isArray(p.days)?p.days:[]).filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).map(x=>({
+      id:String(x.id||uid()),date:x.date,workers:Math.max(0,Math.floor(+x.workers||0)),note:String(x.note||''),
+      vals:(x.vals&&typeof x.vals==='object'&&!Array.isArray(x.vals))?x.vals:{},
+      extras:(Array.isArray(x.extras)?x.extras:[]).map(e=>({id:String(e.id||uid()),label:String(e.label||''),amount:+e.amount||0}))
+    }))
+  }));
+  return {projects,active:d&&d.active};
+}
+
+/* storage: Claude's window.storage when available, otherwise the browser's localStorage */
+function lsOk(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch(e){return false;}}
+const store={
+  async get(k){
+    if(window.storage){try{const r=await window.storage.get(k,false);return r&&r.value;}catch(e){return null;}}
+    return localStorage.getItem(k);
+  },
+  async set(k,v){
+    if(window.storage){await window.storage.set(k,v,false);return;}
+    localStorage.setItem(k,v);
+  }
+};
+async function load(){
+  try{
+    if(!window.storage&&!lsOk()){ui.noStorage=true;}
+    else{
+      const v=await store.get(KEY);
+      if(v){
+        const d=sanitize(JSON.parse(v));
+        S.projects=d.projects;
+        S.active=(d.active==='overview'||S.projects.some(p=>p.id===d.active))?d.active:'overview';
+      }
+    }
+  }catch(e){/* first run or unreadable data */}
+  ui.loaded=true;
+  setStatus();
+  render();
+}
+
+let saveT;
+function save(){
+  ui.save='saving';setStatus();
+  clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    try{
+      if(ui.noStorage)throw new Error('no storage');
+      await store.set(KEY,JSON.stringify({v:1,projects:S.projects,active:S.active}));
+      ui.save='saved';
+    }catch(e){ui.save='error';}
+    setStatus();
+  },400);
+}
+function setStatus(){
+  const el=$('#status');
+  const map={idle:['',''],saving:['saving','جارٍ الحفظ'],saved:['','تم الحفظ'],error:['error','غير محفوظ (مؤقت)']};
+  let [cls,txt]=map[ui.save]||map.idle;
+  if(ui.noStorage&&ui.save!=='saving'){cls='error';txt='الحفظ غير متاح هنا';}
+  el.className='status '+cls;
+  el.innerHTML=txt?`<i></i>${txt}`:'';
+}
+
+/* ================= calculations ================= */
+function calcDay(p,d){
+  const w=Math.max(0,Math.floor(+d.workers||0));
+  const parts=p.fixed.map(f=>{
+    const amt=+f.amount||0;
+    const v=f.type==='worker'?w*amt:(w>0?amt:0);
+    return {id:f.id,name:f.name,type:f.type,amt,v};
+  });
+  const vals=d.vals||{};
+  const vparts=(p.vars||[]).filter(v=>v.type==='money').map(v=>({id:v.id,name:v.name,v:+vals[v.id]||0}));
+  const extra=(d.extras||[]).reduce((s,e)=>s+(+e.amount||0),0);
+  const total=parts.reduce((s,x)=>s+x.v,0)+vparts.reduce((s,x)=>s+x.v,0)+extra;
+  return {w,parts,vparts,extra,total};
+}
+function calcProject(p,month){
+  const days=p.days.filter(d=>inMonth(d.date,month));
+  const items=p.fixed.map((f,i)=>({id:f.id,name:f.name,type:f.type,amt:+f.amount||0,v:0,units:0,color:PAL[i%PAL.length]}));
+  const vall=(p.vars||[]).map((v,i)=>({id:v.id,name:v.name,type:v.type,v:0,color:PAL[(p.fixed.length+i)%PAL.length]}));
+  const vmoney=vall.filter(v=>v.type==='money'),vnum=vall.filter(v=>v.type==='number');
+  let extra=0,workers=0,workDays=0,total=0,extraCount=0;
+  days.forEach(d=>{
+    const c=calcDay(p,d);
+    c.vparts.forEach(x=>{const it=vmoney.find(y=>y.id===x.id);if(it)it.v+=x.v;});
+    vnum.forEach(it=>{it.v+=+(d.vals&&d.vals[it.id])||0;});
+    c.parts.forEach((x,i)=>{items[i].v+=x.v;items[i].units+=(x.type==='worker'?c.w:(c.w>0?1:0));});
+    extra+=c.extra;workers+=c.w;total+=c.total;
+    if(c.total>0)workDays++;
+    extraCount+=(d.extras||[]).filter(e=>(+e.amount||0)!==0).length;
+  });
+  const incList=(p.income||[]).filter(e=>inMonth(e.date,month));
+  const income=incList.reduce((s,e)=>s+(+e.amount||0),0);
+  return {days,items,vmoney,vnum,extra,workers,workDays,total,extraCount,incList,income,hasIncome:(p.income||[]).length>0,profit:income-total};
+}
+
+/* ================= rendering ================= */
+function render(){renderChips();renderMonth();renderMain();}
+
+function renderChips(){
+  let h=`<button class="chip ${S.active==='overview'?'on':''}" data-act="go" data-id="overview"><span>نظرة عامة</span></button>`;
+  S.projects.forEach((p,i)=>{
+    h+=`<button class="chip ${S.active===p.id?'on':''}" data-act="go" data-id="${p.id}"><i style="background:${PAL[i%PAL.length]}"></i><span>${esc(pname(p))}</span></button>`;
+  });
+  h+=`<button class="chip add" data-act="new-project"><span>+ مشروع</span></button>`;
+  $('#chips').innerHTML=h;
+}
+
+function monthList(){
+  const set=new Set([curMonth()]);
+  if(S.month!=='all')set.add(S.month);
+  S.projects.forEach(p=>p.days.forEach(d=>set.add(d.date.slice(0,7))));
+  return [...set].sort().reverse();
+}
+function renderMonth(){
+  const sel=$('#monthSel');
+  sel.innerHTML=monthList().map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('')+`<option value="all">كل الفترة</option>`;
+  sel.value=S.month;
+}
+
+function profitHTML(income,profit){
+  const neg=profit<0;
+  return `<div class="profit ${neg?'neg':'pos'}"><div><span>${neg?'صافي الخسارة':'صافي الربح'}</span><b>${fmt(Math.abs(profit))}<small>ج.م</small></b></div><div class="inc"><span>الإيراد</span><b>${fmt(income)}</b></div></div>`;
+}
+function barHTML(segs,total){
+  if(!(total>0))return '<div class="bar"></div>';
+  return '<div class="bar">'+segs.filter(s=>s.v>0).map(s=>`<i style="flex:${s.v};background:${s.color}"></i>`).join('')+'</div>';
+}
+
+function renderMain(){
+  const m=$('#main');
+  if(!ui.loaded){m.innerHTML='<div class="loading">جارٍ تحميل البيانات…</div>';return;}
+  const p=curProject();
+  m.innerHTML=(S.active==='overview'||!p)?overviewHTML():projectHTML(p);
+}
+
+/* ----- overview ----- */
+function overviewHTML(){
+  if(!S.projects.length){
+    return `<div class="empty"><b>ابدأ بإضافة مشروعك الأول</b><p>لكل مشروع سجله اليومي وأسعاره الثابتة الخاصة به، وتظهر تكلفة كل المشاريع معاً هنا.</p><button class="btn hi" data-act="new-project">+ مشروع جديد</button></div>`;
+  }
+  const cs=S.projects.map((p,i)=>({p,c:calcProject(p,S.month),color:PAL[i%PAL.length]}));
+  const total=cs.reduce((s,x)=>s+x.c.total,0);
+  const workers=cs.reduce((s,x)=>s+x.c.workers,0);
+  const income=cs.reduce((s,x)=>s+x.c.income,0);
+  const anyInc=cs.some(x=>x.c.hasIncome);
+  let h=`<section class="hero">
+    <div class="hero-top"><b>كل المشاريع</b><span>${monthLabel(S.month)}</span></div>
+    <div class="lab">إجمالي التكاليف</div>
+    <div class="big">${fmt(total)}<small>ج.م</small></div>
+    ${barHTML(cs.map(x=>({v:x.c.total,color:x.color})),total)}
+    ${anyInc?profitHTML(income,income-total):''}
+    <div class="stats"><div><b>${S.projects.length}</b><span>مشاريع</span></div><div><b>${workers}</b><span>إجمالي العمال</span></div></div>
+  </section>`;
+  h+=cs.map(({p,c,color})=>`<button class="pcard" data-act="go" data-id="${p.id}">
+    <i class="sw" style="background:${color}"></i>
+    <span class="sn"><b>${esc(pname(p))}</b><small>${c.workDays} يوم عمل، ${c.workers} عامل</small></span>
+    <span class="sv"><b>${fmt(c.total)}</b><small><span dir="ltr">${pct(c.total,total)}%</span> من الإجمالي</small>${c.hasIncome?`<small class="pf ${c.profit<0?'neg':'pos'}">${c.profit<0?'خسارة':'ربح'} ${fmt(Math.abs(c.profit))}</small>`:''}</span>
+  </button>`).join('');
+  h+=`<button class="pcard add" data-act="new-project">+ مشروع جديد</button>`;
+  return h;
+}
+
+/* ----- project ----- */
+function heroHTML(p){
+  const c=calcProject(p,S.month);
+  const segs=c.items.concat(c.vmoney).map(x=>({v:x.v,color:x.color})).concat([{v:c.extra,color:EXTRA_C}]);
+  return `<div class="hero-top"><b>${esc(pname(p))}</b><span>${monthLabel(S.month)}</span></div>
+    <div class="lab">إجمالي التكاليف</div>
+    <div class="big">${fmt(c.total)}<small>ج.م</small></div>
+    ${barHTML(segs,c.total)}
+    ${c.hasIncome?profitHTML(c.income,c.profit):''}
+    <div class="stats"><div><b>${c.workDays}</b><span>أيام العمل</span></div><div><b>${c.workers}</b><span>إجمالي العمال</span></div></div>`;
+}
+function refreshHero(){const h=$('#hero'),p=curProject();if(h&&p)h.innerHTML=heroHTML(p);}
+
+function projectHTML(p){
+  const tabs=[['log','السجل'],['inc','الإيراد'],['sum','الملخص'],['fx','الخانات']];
+  return `<section class="hero" id="hero">${heroHTML(p)}</section>
+  <div class="seg" role="tablist">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${ui.tab===k}" class="${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}">${l}</button>`).join('')}</div>
+  <div id="tabBody">${tabHTML(p)}</div>`;
+}
+function tabHTML(p){return ui.tab==='sum'?sumHTML(p):ui.tab==='fx'?fxHTML(p):ui.tab==='inc'?incHTML(p):logHTML(p);}
+function renderTab(){const b=$('#tabBody'),p=curProject();if(b&&p)b.innerHTML=tabHTML(p);}
+
+/* ----- daily log ----- */
+function logHTML(p){
+  const days=p.days.filter(d=>inMonth(d.date,S.month)).sort((a,b)=>b.date.localeCompare(a.date));
+  let h=`<button class="btn hi block" data-act="add-day">+ إضافة يوم</button><div id="dayList">`;
+  if(!days.length){
+    h+=`<div class="empty"><b>لا توجد أيام مسجلة ${S.month==='all'?'بعد':'في هذا الشهر'}</b><p>أضف يوماً وأدخل عدد العمال، وتُحسب باقي التكاليف تلقائياً من الخانات الثابتة.</p></div>`;
+  }else h+=days.map(d=>dayHTML(p,d)).join('');
+  return h+'</div>';
+}
+function metaText(c){return (c.w?`${c.w} عامل`:'بدون عمال')+(c.extra?`، إضافي ${fmt(c.extra)}`:'');}
+function dayHTML(p,d){
+  const open=ui.openDay===d.id,c=calcDay(p,d),dp=dateParts(d.date);
+  return `<article class="day ${open?'open':''}" data-day="${d.id}">
+    <button class="day-head" data-act="toggle-day" data-id="${d.id}" aria-expanded="${open}">
+      <span class="tile"><b>${dp.d}</b><small>${dp.mon}</small></span>
+      <span class="dmid"><b>${dp.wd}</b><span data-live="meta:${d.id}">${metaText(c)}</span></span>
+      <span class="dtot"><b data-live="tot:${d.id}">${fmt(c.total)}</b><small>ج.م</small></span>
+    </button>${open?dayBody(p,d,c):''}</article>`;
+}
+function bdHTML(p,c){
+  let h=c.parts.map(x=>`<div><span>${esc(x.name)}<em>${x.type==='worker'?`${fmt(x.amt)} × ${c.w}`:'لكل يوم'}</em></span><b>${fmt(x.v)}</b></div>`).join('');
+  h+=c.vparts.filter(x=>x.v).map(x=>`<div><span>${esc(x.name)}<em>إدخال يدوي</em></span><b>${fmt(x.v)}</b></div>`).join('');
+  if(c.extra)h+=`<div><span>تكاليف إضافية</span><b>${fmt(c.extra)}</b></div>`;
+  if(!c.w&&p.fixed.some(f=>f.type==='day'))h+=`<p class="hint">البنود اليومية تُضاف عند تسجيل عمال في اليوم.</p>`;
+  return h;
+}
+function extrasHTML(d){
+  return (d.extras||[]).map(e=>`<div class="exrow">
+    <input type="text" placeholder="البيان" value="${esc(e.label)}" data-f="ex-label" data-day="${d.id}" data-ex="${e.id}" aria-label="بيان التكلفة">
+    <input inputmode="decimal" placeholder="السعر" value="${e.amount||''}" data-f="ex-amount" data-day="${d.id}" data-ex="${e.id}" aria-label="السعر">
+    <button type="button" class="x" data-act="del-extra" data-day="${d.id}" data-ex="${e.id}" aria-label="حذف البند">×</button></div>`).join('');
+}
+function varsHTML(p,d){
+  const vs=p.vars||[];if(!vs.length)return '';
+  return `<div class="vars">`+vs.map(v=>{
+    const raw=d.vals&&d.vals[v.id];
+    const val=v.type==='text'?(raw==null?'':String(raw)):((+raw)?raw:'');
+    return `<label class="fld ${v.type==='text'?'wide':''}"><span>${esc(v.name||'بدون اسم')}${v.type==='money'?'<em> (ج.م)</em>':''}</span><input ${v.type==='text'?'type="text"':'inputmode="decimal" autocomplete="off"'} value="${esc(val)}" data-f="var-val" data-day="${d.id}" data-var="${v.id}"></label>`;
+  }).join('')+`</div>`;
+}
+function dayBody(p,d,c){
+  const dup=p.days.some(x=>x.id!==d.id&&x.date===d.date);
+  return `<div class="day-body">
+    <div class="row2">
+      <label class="fld"><span>التاريخ</span><input type="date" value="${d.date}" data-f="day-date" data-day="${d.id}"></label>
+      <div class="fld"><span>عدد العمال</span><div class="stepper">
+        <button type="button" data-act="step" data-id="${d.id}" data-d="-1" aria-label="إنقاص">−</button>
+        <input inputmode="numeric" autocomplete="off" value="${c.w}" data-f="day-workers" data-day="${d.id}" aria-label="عدد العمال">
+        <button type="button" data-act="step" data-id="${d.id}" data-d="1" aria-label="زيادة">+</button></div></div>
+    </div>
+    ${varsHTML(p,d)}
+    <div class="warn" data-live="dup:${d.id}" ${dup?'':'hidden'}>هذا التاريخ مسجّل مسبقاً في المشروع.</div>
+    <div class="bd" data-live="bd:${d.id}">${bdHTML(p,c)}</div>
+    <div class="ex"><div class="lbl">تكاليف إضافية</div><div id="ex-${d.id}">${extrasHTML(d)}</div>
+      <button type="button" class="linkbtn" data-act="add-extra" data-day="${d.id}">+ إضافة بند</button></div>
+    <label class="fld"><span>ملاحظات</span><input type="text" value="${esc(d.note)}" data-f="day-note" data-day="${d.id}" placeholder="اختياري"></label>
+    <div class="acts"><button class="btn danger" data-act="del-day" data-id="${d.id}">حذف اليوم</button><button class="btn fill" data-act="toggle-day" data-id="${d.id}">تم</button></div>
+  </div>`;
+}
+function replaceCard(id){
+  const p=curProject(),el=$(`.day[data-day="${id}"]`);
+  if(!p||!el)return;
+  const d=p.days.find(x=>x.id===id);
+  if(!d){el.remove();return;}
+  el.outerHTML=dayHTML(p,d);
+}
+function setLive(key,txt){const el=$(`[data-live="${key}"]`);if(el)el.textContent=txt;}
+function refreshDay(p,d){
+  const c=calcDay(p,d);
+  setLive(`tot:${d.id}`,fmt(c.total));
+  setLive(`meta:${d.id}`,metaText(c));
+  const bd=$(`[data-live="bd:${d.id}"]`);if(bd)bd.innerHTML=bdHTML(p,c);
+  refreshHero();
+}
+function defaultNewDate(p){
+  const t=todayISO();
+  if(S.month==='all')return t;
+  const inM=p.days.filter(d=>d.date.startsWith(S.month)).map(d=>d.date).sort();
+  if(inM.length){const last=inM[inM.length-1],nx=addDays(last,1);return nx.startsWith(S.month)?nx:last;}
+  return t.startsWith(S.month)?t:S.month+'-01';
+}
+
+/* ----- income ----- */
+function incRow(e){
+  return `<div class="ir" data-inc="${e.id}">
+    <input type="text" value="${esc(e.label)}" placeholder="البيان" data-f="inc-label" data-inc="${e.id}" aria-label="بيان الإيراد">
+    <button type="button" class="x" data-act="del-inc" data-inc="${e.id}" aria-label="حذف الإيراد">×</button>
+    <div class="r2"><input type="date" value="${e.date}" data-f="inc-date" data-inc="${e.id}" aria-label="التاريخ">
+      <div class="amt"><input inputmode="decimal" value="${e.amount||''}" placeholder="المبلغ" data-f="inc-amount" data-inc="${e.id}" aria-label="المبلغ"><span>ج.م</span></div></div>
+  </div>`;
+}
+function incHTML(p){
+  const c=calcProject(p,S.month);
+  const list=c.incList.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  let h=`<p class="intro">سجّل التوتال النهائي أو الدفعات المستلمة. يُطرح الإيراد من إجمالي التكاليف لإظهار صافي الربح.</p>
+    <button class="btn hi block" data-act="add-inc">+ إضافة إيراد</button><div id="incList">`;
+  if(!list.length)h+=`<div class="empty"><b>لا يوجد إيراد مسجل ${S.month==='all'?'بعد':'في هذا الشهر'}</b><p>أضف التوتال النهائي للمشروع أو كل دفعة تستلمها.</p></div>`;
+  else h+=list.map(incRow).join('')+`<div class="sum" style="margin-top:12px"><div class="srow tot"><span class="sn"><b>إجمالي الإيراد</b></span><span class="sv"><b data-live="inctot">${fmt(c.income)}</b></span></div></div>`;
+  return h+`</div><p class="note">ربح كل شهر يحسب الإيراد المسجل في نفس الشهر. اختر «كل الفترة» من أعلى لرؤية ربح المشروع كله.</p>`;
+}
+
+/* ----- summary ----- */
+function summaryRows(p,c){
+  const rows=c.items.map(x=>({name:x.name,sub:x.type==='worker'?`${fmt(x.amt)} × ${c.workers} عامل`:`${fmt(x.amt)} × ${x.units} يوم`,v:x.v,color:x.color}));
+  c.vmoney.forEach(x=>rows.push({name:x.name||'بدون اسم',sub:'إدخال يدوي',v:x.v,color:x.color}));
+  rows.push({name:'التكاليف الإضافية',sub:c.extraCount?`${c.extraCount} بند`:'لا توجد',v:c.extra,color:EXTRA_C});
+  return rows;
+}
+function sumHTML(p){
+  const c=calcProject(p,S.month),rows=summaryRows(p,c);
+  let h=`<div class="sum">`+rows.map(r=>`<div class="srow"><i class="sw" style="background:${r.color}"></i><span class="sn"><b>${esc(r.name)}</b><small>${esc(r.sub)}</small></span><span class="sv"><b>${fmt(r.v)}</b><small>${pct(r.v,c.total)}%</small></span></div>`).join('')
+    +`<div class="srow tot"><span class="sn"><b>إجمالي التكاليف</b><small>${c.workDays} يوم عمل، ${c.workers} عامل</small></span><span class="sv"><b>${fmt(c.total)}</b><small>${c.total>0?'100%':'0%'}</small></span></div>`
+    +(c.hasIncome?`<div class="srow"><span class="sn"><b>الإيراد (التوتال النهائي)</b><small>${c.incList.length} بند</small></span><span class="sv"><b>${fmt(c.income)}</b></span></div>
+      <div class="srow tot"><span class="sn"><b>${c.profit<0?'صافي الخسارة':'صافي الربح'}</b><small>الإيراد − التكاليف</small></span><span class="sv"><b class="pf ${c.profit<0?'neg':'pos'}">${fmt(Math.abs(c.profit))}</b>${c.income>0?`<small>هامش <span dir="ltr">${pct(c.profit,c.income)}%</span></small>`:''}</span></div>`:'')+`</div>`;
+  if(c.vnum.length)h+=`<h3>أرقام المتابعة</h3><div class="sum">`+c.vnum.map(x=>`<div class="srow"><span class="sn"><b>${esc(x.name||'بدون اسم')}</b><small>مجموع القيم المسجلة</small></span><span class="sv"><b>${fmt(x.v)}</b></span></div>`).join('')+`</div>`;
+  const ex=[];
+  c.days.forEach(d=>(d.extras||[]).forEach(e=>{if((+e.amount||0)!==0||e.label)ex.push({date:d.date,label:e.label,amount:+e.amount||0});}));
+  ex.sort((a,b)=>a.date.localeCompare(b.date));
+  if(ex.length){
+    h+=`<h3>تفاصيل التكاليف الإضافية</h3><div class="sum">`+ex.map(e=>{const dp=dateParts(e.date);
+      return `<div class="srow"><span class="sn"><b>${esc(e.label||'بدون بيان')}</b><small>${dp.d} ${dp.mon}</small></span><span class="sv"><b>${fmt(e.amount)}</b></span></div>`;}).join('')+`</div>`;
+  }
+  return h+`<button class="btn block" data-act="share">مشاركة الملخص</button>`;
+}
+function summaryText(p){
+  const c=calcProject(p,S.month),rows=summaryRows(p,c);
+  return [`ملخص تكاليف مشروع ${pname(p)}`,`الفترة: ${monthLabel(S.month)}`,'']
+    .concat(rows.map(r=>`${r.name}: ${fmt(r.v)} ج.م (${pct(r.v,c.total)}%)`))
+    .concat(['',`إجمالي التكاليف: ${fmt(c.total)} ج.م`])
+    .concat(c.hasIncome?[`الإيراد (التوتال النهائي): ${fmt(c.income)} ج.م`,`${c.profit<0?'صافي الخسارة':'صافي الربح'}: ${fmt(Math.abs(c.profit))} ج.م`]:[])
+    .concat([`أيام العمل: ${c.workDays}`,`إجمالي العمال: ${c.workers}`])
+    .concat(c.vnum.map(x=>`${x.name||'بدون اسم'}: ${fmt(x.v)}`)).join('\n');
+}
+
+/* ----- fixed fields ----- */
+const VHINT={money:'مبلغ بالجنيه يُضاف إلى توتال اليوم.',number:'رقم للمتابعة فقط، لا يدخل في التوتال ويظهر مجموعه في الملخص.',text:'نص حر يظهر في اليوم فقط.'};
+function vHTML(v){
+  return `<div class="vx" data-vx="${v.id}">
+    <input type="text" value="${esc(v.name)}" data-f="var-name" data-var="${v.id}" aria-label="اسم الخانة">
+    <button type="button" class="x" data-act="del-var" data-var="${v.id}" aria-label="حذف الخانة">×</button>
+    <div class="tg" role="group">${[['money','مبلغ'],['number','رقم'],['text','نص']].map(([k,l])=>`<button type="button" class="${v.type===k?'on':''}" data-act="set-vtype" data-var="${v.id}" data-type="${k}">${l}</button>`).join('')}</div>
+    <div class="vh">${VHINT[v.type]}</div>
+  </div>`;
+}
+function fxHTML(p){
+  let h=`<h3 style="margin-top:0">خانات ثابتة</h3><p class="intro">بنود تُحسب تلقائياً في كل يوم. «لكل عامل» تُضرب في عدد العمال، و«لكل يوم» تُضاف مرة واحدة في أي يوم فيه عمال.</p>`;
+  h+=p.fixed.map((f,i)=>`<div class="fx" data-fx="${f.id}">
+    <i class="sw" style="background:${PAL[i%PAL.length]}"></i>
+    <input type="text" value="${esc(f.name)}" data-f="fx-name" data-fx="${f.id}" aria-label="اسم البند">
+    <button type="button" class="x" data-act="del-fx" data-fx="${f.id}" aria-label="حذف البند">×</button>
+    <div class="amt"><input inputmode="decimal" value="${f.amount}" data-f="fx-amount" data-fx="${f.id}" aria-label="السعر"><span>ج.م</span>
+      <div class="tg" role="group">
+        <button type="button" class="${f.type==='worker'?'on':''}" data-act="set-type" data-fx="${f.id}" data-type="worker">لكل عامل</button>
+        <button type="button" class="${f.type==='day'?'on':''}" data-act="set-type" data-fx="${f.id}" data-type="day">لكل يوم</button>
+      </div></div>
+  </div>`).join('');
+  h+=`<button class="btn block" data-act="add-fx">+ إضافة خانة ثابتة</button>
+    <p class="note">أي تعديل في الأسعار يُطبَّق على جميع أيام المشروع، بما فيها الأيام السابقة.</p>
+    <h3 style="margin-top:26px">خانات متغيرة</h3>
+    <p class="intro">خانات تُدخل قيمتها بنفسك في كل يوم، مثل سلفة أو ساعات إضافية أو اسم المورد. تظهر داخل كل يوم من أيام المشروع.</p>
+    ${(p.vars||[]).map(vHTML).join('')}
+    <button class="btn block" data-act="add-var">+ إضافة خانة متغيرة</button>
+    <div class="proj-set"><label class="fld"><span>اسم المشروع</span><input type="text" value="${esc(p.name)}" data-f="proj-name"></label>
+    <button class="btn danger block" data-act="del-project">حذف المشروع</button></div>`;
+  return h;
+}
+
+/* ================= modal & toast ================= */
+function openModal(inner){
+  $('#modal').innerHTML=`<div class="scrim" data-act="close-modal"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+  const f=$('#modal input,#modal textarea');if(f){f.focus();if(f.select)f.select();}
+}
+function closeModal(){$('#modal').innerHTML='';}
+let toastT;
+function toast(msg,undo){
+  const el=$('#toast');
+  el.innerHTML=`<span>${esc(msg)}</span>`+(undo?`<button data-act="undo">تراجع</button>`:'');
+  el.hidden=false;ui.undo=undo||null;
+  clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;ui.undo=null;},6000);
+}
+function modalNewProject(){
+  openModal(`<h2>مشروع جديد</h2>
+    <label class="fld"><span>اسم المشروع</span><input type="text" id="np-name" placeholder="مثال: مشروع العاصمة" maxlength="60"></label>
+    <p>يبدأ بالأسعار الثابتة: العامل 550، رئيس الوردية 600، النقل 800. يمكنك تعديلها بعد الإنشاء.</p>
+    <div class="acts"><button class="btn" data-act="close-modal-btn">إلغاء</button><button class="btn hi" data-act="create-project">إنشاء</button></div>`);
+}
+function createProject(){
+  const inp=$('#np-name');
+  const name=(inp&&inp.value.trim())||`مشروع ${S.projects.length+1}`;
+  const p=newProject(name);
+  S.projects.push(p);S.active=p.id;ui.tab='fx';ui.openDay=null;
+  closeModal();render();save();window.scrollTo(0,0);
+}
+function modalDeleteProject(){
+  const p=curProject();if(!p)return;
+  openModal(`<h2>حذف المشروع؟</h2><p>سيُحذف مشروع «${esc(pname(p))}» وكل أيامه نهائياً، ولا يمكن التراجع.</p>
+    <div class="acts"><button class="btn" data-act="close-modal-btn">إلغاء</button><button class="btn danger" data-act="confirm-del-project">حذف</button></div>`);
+}
+function modalShare(){
+  const p=curProject();if(!p)return;
+  openModal(`<h2>ملخص ${esc(pname(p))}</h2><textarea id="shareTxt" readonly>${esc(summaryText(p))}</textarea>
+    <div class="acts"><button class="btn" data-act="close-modal-btn">إغلاق</button><button class="btn hi" data-act="copy">نسخ</button></div>`);
+}
+async function copyShare(){
+  const ta=$('#shareTxt');if(!ta)return;
+  try{await navigator.clipboard.writeText(ta.value);toast('تم النسخ');}
+  catch(e){
+    ta.focus();ta.select();
+    let ok=false;try{ok=document.execCommand('copy');}catch(_){}
+    toast(ok?'تم النسخ':'حدّد النص وانسخه يدوياً');
+  }
+}
+
+/* ================= actions ================= */
+function addDay(){
+  const p=curProject();if(!p)return;
+  const d={id:uid(),date:defaultNewDate(p),workers:0,extras:[],vals:{},note:''};
+  p.days.push(d);ui.openDay=d.id;
+  renderTab();save();refreshHero();
+  const card=$(`.day[data-day="${d.id}"]`);
+  if(card){card.scrollIntoView({block:'center'});const i=card.querySelector('[data-f="day-workers"]');if(i){i.focus();i.select();}}
+}
+function toggleDay(id){
+  const prev=ui.openDay;ui.openDay=prev===id?null:id;
+  [prev,id].filter((v,i,a)=>v&&a.indexOf(v)===i).forEach(replaceCard);
+  if(ui.openDay){const el=$(`.day[data-day="${id}"]`);if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+function delDay(id){
+  const p=curProject();if(!p)return;
+  const idx=p.days.findIndex(d=>d.id===id);if(idx<0)return;
+  const [d]=p.days.splice(idx,1);
+  ui.openDay=null;renderTab();refreshHero();renderMonth();save();
+  toast('تم حذف اليوم',()=>{p.days.splice(idx,0,d);renderTab();refreshHero();renderMonth();save();});
+}
+function delFx(id){
+  const p=curProject();if(!p)return;
+  const idx=p.fixed.findIndex(f=>f.id===id);if(idx<0)return;
+  const [f]=p.fixed.splice(idx,1);
+  renderTab();refreshHero();save();
+  toast('تم حذف الخانة',()=>{p.fixed.splice(idx,0,f);renderTab();refreshHero();save();});
+}
+function findEx(d,id){return (d.extras||[]).find(e=>e.id===id);}
+
+function onClick(e){
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const a=t.dataset.act,p=curProject();
+  if(a==='close-modal'){if(e.target===t)closeModal();return;}
+  switch(a){
+    case 'go':S.active=t.dataset.id;ui.openDay=null;ui.tab='log';renderChips();renderMain();save();window.scrollTo(0,0);break;
+    case 'new-project':modalNewProject();break;
+    case 'create-project':createProject();break;
+    case 'close-modal-btn':closeModal();break;
+    case 'tab':ui.tab=t.dataset.tab;ui.openDay=null;renderMain();break;
+    case 'add-day':addDay();break;
+    case 'toggle-day':toggleDay(t.dataset.id);break;
+    case 'del-day':delDay(t.dataset.id);break;
+    case 'step':{
+      const d=p&&p.days.find(x=>x.id===t.dataset.id);if(!d)break;
+      d.workers=Math.max(0,(+d.workers||0)+(+t.dataset.d));
+      const inp=$(`.day[data-day="${d.id}"] [data-f="day-workers"]`);if(inp)inp.value=d.workers;
+      refreshDay(p,d);save();break;
+    }
+    case 'add-extra':{
+      const d=p&&p.days.find(x=>x.id===t.dataset.day);if(!d)break;
+      d.extras.push({id:uid(),label:'',amount:0});
+      const box=$(`#ex-${d.id}`);if(box){box.innerHTML=extrasHTML(d);const ins=box.querySelectorAll('[data-f="ex-label"]');if(ins.length)ins[ins.length-1].focus();}
+      save();break;
+    }
+    case 'del-extra':{
+      const d=p&&p.days.find(x=>x.id===t.dataset.day);if(!d)break;
+      d.extras=d.extras.filter(x=>x.id!==t.dataset.ex);
+      const box=$(`#ex-${d.id}`);if(box)box.innerHTML=extrasHTML(d);
+      refreshDay(p,d);save();break;
+    }
+    case 'add-fx':{
+      if(!p)break;
+      const f={id:uid(),name:'خانة جديدة',amount:0,type:'day'};
+      p.fixed.push(f);renderTab();refreshHero();save();
+      const el=$(`[data-fx="${f.id}"] [data-f="fx-name"]`);if(el){el.focus();el.select();el.scrollIntoView({block:'center'});}
+      break;
+    }
+    case 'del-fx':delFx(t.dataset.fx);break;
+    case 'add-var':{
+      if(!p)break;
+      const v={id:uid(),name:'خانة جديدة',type:'money'};
+      (p.vars=p.vars||[]).push(v);renderTab();save();
+      const el=$(`[data-vx="${v.id}"] [data-f="var-name"]`);if(el){el.focus();el.select();el.scrollIntoView({block:'center'});}
+      break;
+    }
+    case 'del-var':{
+      if(!p)break;
+      const idx=p.vars.findIndex(x=>x.id===t.dataset.var);if(idx<0)break;
+      const [v]=p.vars.splice(idx,1);
+      renderTab();refreshHero();save();
+      toast('تم حذف الخانة',()=>{p.vars.splice(idx,0,v);renderTab();refreshHero();save();});
+      break;
+    }
+    case 'set-vtype':{
+      const v=p&&p.vars.find(x=>x.id===t.dataset.var);if(!v)break;
+      v.type=t.dataset.type;renderTab();refreshHero();save();break;
+    }
+    case 'set-type':{
+      const f=p&&p.fixed.find(x=>x.id===t.dataset.fx);if(!f)break;
+      f.type=t.dataset.type;renderTab();refreshHero();save();break;
+    }
+    case 'add-inc':{
+      if(!p)break;
+      const t0=todayISO();
+      const e={id:uid(),date:(S.month==='all'||t0.startsWith(S.month))?t0:S.month+'-01',label:(p.income||[]).length?'دفعة':'التوتال النهائي',amount:0};
+      (p.income=p.income||[]).push(e);renderTab();refreshHero();save();
+      const el=$(`[data-inc="${e.id}"] [data-f="inc-amount"]`);if(el){el.focus();el.scrollIntoView({block:'center'});}
+      break;
+    }
+    case 'del-inc':{
+      if(!p)break;
+      const idx=p.income.findIndex(x=>x.id===t.dataset.inc);if(idx<0)break;
+      const [e]=p.income.splice(idx,1);
+      renderTab();refreshHero();save();
+      toast('تم حذف الإيراد',()=>{p.income.splice(idx,0,e);renderTab();refreshHero();save();});
+      break;
+    }
+    case 'share':modalShare();break;
+    case 'copy':copyShare();break;
+    case 'del-project':modalDeleteProject();break;
+    case 'confirm-del-project':{
+      if(!p)break;
+      S.projects=S.projects.filter(x=>x.id!==p.id);S.active='overview';ui.openDay=null;
+      closeModal();render();save();window.scrollTo(0,0);break;
+    }
+    case 'undo':{const fn=ui.undo;ui.undo=null;$('#toast').hidden=true;if(fn)fn();break;}
+  }
+}
+
+function onInput(e){
+  const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
+  const p=curProject();if(!p)return;
+  if(f==='day-workers'||f==='day-note'||f==='ex-label'||f==='ex-amount'){
+    const d=p.days.find(x=>x.id===t.dataset.day);if(!d)return;
+    if(f==='day-workers')d.workers=Math.max(0,Math.floor(parseNum(t.value)));
+    else if(f==='day-note')d.note=t.value;
+    else{const ex=findEx(d,t.dataset.ex);if(!ex)return;if(f==='ex-label')ex.label=t.value;else ex.amount=parseNum(t.value);}
+    if(f!=='day-note')refreshDay(p,d);
+    save();
+  }else if(f==='var-val'){
+    const d=p.days.find(x=>x.id===t.dataset.day),v=(p.vars||[]).find(x=>x.id===t.dataset.var);if(!d||!v)return;
+    d.vals=d.vals||{};
+    d.vals[v.id]=v.type==='text'?t.value:parseNum(t.value);
+    refreshDay(p,d);save();
+  }else if(f==='var-name'){
+    const v=(p.vars||[]).find(x=>x.id===t.dataset.var);if(v){v.name=t.value;save();}
+  }else if(f==='fx-name'||f==='fx-amount'){
+    const fx=p.fixed.find(x=>x.id===t.dataset.fx);if(!fx)return;
+    if(f==='fx-name')fx.name=t.value;else fx.amount=parseNum(t.value);
+    refreshHero();save();
+  }else if(f==='proj-name'){
+    p.name=t.value;renderChips();refreshHero();save();
+  }
+}
+function onChange(e){
+  const t=e.target;
+  if(t.id==='monthSel'){S.month=t.value;ui.openDay=null;renderMain();return;}
+  if(t.dataset&&t.dataset.f==='day-date'){
+    const p=curProject(),d=p&&p.days.find(x=>x.id===t.dataset.day);
+    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(t.value)){if(d)t.value=d.date;return;}
+    d.date=t.value;
+    if(S.month!=='all'&&!d.date.startsWith(S.month)){S.month=d.date.slice(0,7);renderMonth();}
+    renderMain();save();
+    const el=$(`.day[data-day="${d.id}"]`);if(el)el.scrollIntoView({block:'nearest'});
+  }
+}
+function onFocusOut(e){
+  const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
+  const p=curProject();if(!p)return;
+  if(f==='day-workers'||f==='ex-amount'){
+    const d=p.days.find(x=>x.id===t.dataset.day);if(!d)return;
+    if(f==='day-workers')t.value=d.workers;
+    else{const ex=findEx(d,t.dataset.ex);if(ex)t.value=ex.amount||'';}
+  }else if(f==='var-val'){
+    const d=p.days.find(x=>x.id===t.dataset.day),v=(p.vars||[]).find(x=>x.id===t.dataset.var);
+    if(d&&v&&v.type!=='text'){const n=+(d.vals&&d.vals[v.id])||0;t.value=n||'';}
+  }else if(f==='fx-amount'){
+    const fx=p.fixed.find(x=>x.id===t.dataset.fx);if(fx)t.value=fx.amount;
+  }else if(f==='proj-name'&&!t.value.trim()){
+    t.value='';
+  }
+}
+function onKey(e){
+  if(e.key==='Escape'&&$('#modal').innerHTML)closeModal();
+  if(e.key==='Enter'&&e.target.id==='np-name'){e.preventDefault();createProject();}
+}
+
+document.addEventListener('click',onClick);
+document.addEventListener('input',onInput);
+document.addEventListener('change',onChange);
+document.addEventListener('focusout',onFocusOut);
+document.addEventListener('keydown',onKey);
+document.addEventListener('input',e=>{
+  const t=e.target,f=t.dataset&&t.dataset.f;if(!f||f.indexOf('inc-')!==0)return;
+  const p=curProject(),r=p&&(p.income||[]).find(x=>x.id===t.dataset.inc);if(!r)return;
+  if(f==='inc-label')r.label=t.value;
+  else if(f==='inc-amount'){r.amount=parseNum(t.value);setLive('inctot',fmt(calcProject(p,S.month).income));}
+  refreshHero();save();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(!t.dataset||t.dataset.f!=='inc-date')return;
+  const p=curProject(),r=p&&(p.income||[]).find(x=>x.id===t.dataset.inc);if(!r)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(t.value)){t.value=r.date;return;}
+  r.date=t.value;
+  if(S.month!=='all'&&!r.date.startsWith(S.month)){S.month=r.date.slice(0,7);renderMonth();}
+  renderMain();save();
+});
+document.addEventListener('focusout',e=>{
+  const t=e.target;if(!t.dataset||t.dataset.f!=='inc-amount')return;
+  const p=curProject(),r=p&&(p.income||[]).find(x=>x.id===t.dataset.inc);if(r)t.value=r.amount||'';
+});
+
+renderChips();renderMonth();
+load();
+})();
+</script>
+</body>
+</html>
